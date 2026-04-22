@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marlon Bikes</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .hero, .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .hero {
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+    }
+    .hero p {
+      margin: 0;
+      color: #9ca3af;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .card { padding: 18px; }
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      margin: 12px 0 6px;
+      color: #cbd5e1;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #0b1220;
+      color: #f8fafc;
+      outline: none;
+    }
+    textarea { min-height: 84px; resize: vertical; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #f59e0b;
+      color: #111827;
+    }
+    .btn-secondary {
+      background: #1f2937;
+      color: #f8fafc;
+      border: 1px solid #334155;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 700px) {
+      .toolbar { grid-template-columns: 1fr; }
+    }
+    .item {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .name {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 0;
+    }
+    .badge {
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+      color: #111827;
+    }
+    .status-em_andamento { background: #f59e0b; }
+    .status-concluido { background: #60a5fa; }
+    .status-entregue { background: #34d399; }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    @media (max-width: 900px) {
+      .info-grid { grid-template-columns: 1fr; }
+    }
+    .info {
+      background: #0b1220;
+      border: 1px solid #1f2937;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .info small {
+      display: block;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: .04em;
+    }
+    .item-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .empty, .error {
+      padding: 18px;
+      border-radius: 14px;
+      text-align: center;
+      margin-top: 12px;
+    }
+    .empty { background: #111827; border: 1px dashed #334155; color: #94a3b8; }
+    .error { background: #451a1a; color: #fecaca; border: 1px solid #7f1d1d; }
+    .muted { color: #94a3b8; }
+    .small { font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>🚲 Marlon Bikes</h1>
+      <p>Cadastro completo de clientes, bicicletas e serviços. Busca por nome/CPF, filtro por status e botão de WhatsApp.</p>
+      <p class="small muted" style="margin-top:8px;">Este app salva online no Firebase e pode ser acessado de qualquer dispositivo quando publicado.</p>
+    </div>
+
+    <div id="errorBox" class="error" style="display:none;"></div>
+
+    <div class="layout">
+      <div class="card">
+        <h2 id="formTitle">Novo cadastro</h2>
+        <form id="cadastroForm">
+          <label>Nome do cliente</label>
+          <input id="nome" required placeholder="Nome completo" />
+
+          <label>Telefone / WhatsApp</label>
+          <input id="telefone" required placeholder="(00) 00000-0000" />
+
+          <label>CPF</label>
+          <input id="cpf" required placeholder="000.000.000-00" />
+
+          <label>Endereço</label>
+          <input id="endereco" placeholder="Rua, número, bairro" />
+
+          <label>Descrição da bicicleta</label>
+          <textarea id="bicicleta" required placeholder="Marca, modelo, cor, aro e observações"></textarea>
+
+          <label>Serviço prestado</label>
+          <textarea id="servico" required placeholder="Ex: revisão, troca de freio, alinhamento"></textarea>
+
+          <div class="grid-2">
+            <div>
+              <label>Data de entrada</label>
+              <input id="dataEntrada" type="date" />
+            </div>
+            <div>
+              <label>Data de saída</label>
+              <input id="dataSaida" type="date" />
+            </div>
+          </div>
+
+          <label>Status do serviço</label>
+          <select id="status">
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluido">Concluído</option>
+            <option value="entregue">Entregue</option>
+          </select>
+
+          <label>Observações</label>
+          <textarea id="observacoes" placeholder="Detalhes extras"></textarea>
+
+          <div class="actions">
+            <button class="btn-primary" type="submit" id="saveBtn">Salvar cadastro</button>
+            <button class="btn-secondary" type="button" id="clearBtn">Limpar</button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:14px;">
+          <div class="toolbar">
+            <input id="busca" placeholder="Buscar por nome, CPF, telefone, bike ou serviço" />
+            <select id="filtroStatus">
+              <option value="todos">Todos os status</option>
+              <option value="em_andamento">Em andamento</option>
+              <option value="concluido">Concluído</option>
+              <option value="entregue">Entregue</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="lista"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc,
+      doc, query, orderBy, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAebzYdRr6QKpmYEslbXXKAwxvBwfm_Ntg",
+      authDomain: "marlon-bikes.firebaseapp.com",
+      projectId: "marlon-bikes",
+      storageBucket: "marlon-bikes.firebasestorage.app",
+      messagingSenderId: "637763072865",
+      appId: "1:637763072865:web:66d53ea982a389ced50b20"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const clientesRef = collection(db, "clientes_marlon_bikes");
+
+    const els = {
+      form: document.getElementById("cadastroForm"),
+      formTitle: document.getElementById("formTitle"),
+      saveBtn: document.getElementById("saveBtn"),
+      clearBtn: document.getElementById("clearBtn"),
+      nome: document.getElementById("nome"),
+      telefone: document.getElementById("telefone"),
+      cpf: document.getElementById("cpf"),
+      endereco: document.getElementById("endereco"),
+      bicicleta: document.getElementById("bicicleta"),
+      servico: document.getElementById("servico"),
+      dataEntrada: document.getElementById("dataEntrada"),
+      dataSaida: document.getElementById("dataSaida"),
+      status: document.getElementById("status"),
+      observacoes: document.getElementById("observacoes"),
+      busca: document.getElementById("busca"),
+      filtroStatus: document.getElementById("filtroStatus"),
+      lista: document.getElementById("lista"),
+      errorBox: document.getElementById("errorBox"),
+    };
+
+    let clientes = [];
+    let editingId = "";
+
+    function onlyDigits(v) {
+      return String(v || "").replace(/\D/g, "");
+    }
+
+    function formatPhone(v) {
+      const digits = onlyDigits(v).slice(0, 11);
+      if (digits.length <= 10) {
+        return digits.replace(/(\d{0,2})(\d{0,4})(\d{0,4})/, (_, a, b, c) => {
+          let out = "";
+          if (a) out += "(" + a;
+          if (a.length === 2) out += ") ";
+          if (b) out += b;
+          if (c) out += "-" + c;
+          return out;
+        }).trim();
+      }
+      return digits.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+    }
+
+    function formatCPF(v) {
+      const digits = onlyDigits(v).slice(0, 11);
+      return digits
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    }
+
+    function statusLabel(status) {
+      return ({
+        em_andamento: "Em andamento",
+        concluido: "Concluído",
+        entregue: "Entregue"
+      })[status] || status;
+    }
+
+    function resetForm() {
+      editingId = "";
+      els.formTitle.textContent = "Novo cadastro";
+      els.saveBtn.textContent = "Salvar cadastro";
+      els.form.reset();
+      els.dataEntrada.value = new Date().toISOString().slice(0, 10);
+      els.status.value = "em_andamento";
+      hideError();
+    }
+
+    function showError(msg) {
+      els.errorBox.style.display = "block";
+      els.errorBox.textContent = msg;
+    }
+
+    function hideError() {
+      els.errorBox.style.display = "none";
+      els.errorBox.textContent = "";
+    }
+
+    function getPayload() {
+      return {
+        nome: els.nome.value.trim(),
+        telefone: formatPhone(els.telefone.value),
+        cpf: formatCPF(els.cpf.value),
+        endereco: els.endereco.value.trim(),
+        bicicleta: els.bicicleta.value.trim(),
+        servico: els.servico.value.trim(),
+        dataEntrada: els.dataEntrada.value,
+        dataSaida: els.dataSaida.value,
+        status: els.status.value,
+        observacoes: els.observacoes.value.trim(),
+        updatedAt: serverTimestamp(),
+      };
+    }
+
+    function openWhatsApp(phone) {
+      const n = onlyDigits(phone);
+      if (!n) return;
+      window.open("https://wa.me/55" + n, "_blank");
+    }
+
+    function editItem(item) {
+      editingId = item.id;
+      els.formTitle.textContent = "Editar cliente";
+      els.saveBtn.textContent = "Atualizar cadastro";
+      els.nome.value = item.nome || "";
+      els.telefone.value = item.telefone || "";
+      els.cpf.value = item.cpf || "";
+      els.endereco.value = item.endereco || "";
+      els.bicicleta.value = item.bicicleta || "";
+      els.servico.value = item.servico || "";
+      els.dataEntrada.value = item.dataEntrada || "";
+      els.dataSaida.value = item.dataSaida || "";
+      els.status.value = item.status || "em_andamento";
+      els.observacoes.value = item.observacoes || "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function removeItem(id) {
+      if (!confirm("Deseja excluir este cadastro?")) return;
+      try {
+        await deleteDoc(doc(db, "clientes_marlon_bikes", id));
+      } catch (e) {
+        showError("Não foi possível excluir este cadastro.");
+      }
+    }
+
+    function renderList() {
+      const termo = els.busca.value.toLowerCase().trim();
+      const filtroStatus = els.filtroStatus.value;
+
+      const filtrados = clientes.filter((c) => {
+        const alvo = [c.nome, c.cpf, c.telefone, c.endereco, c.bicicleta, c.servico]
+          .join(" ")
+          .toLowerCase();
+        const bateBusca = !termo || alvo.includes(termo);
+        const bateStatus = filtroStatus === "todos" ? true : c.status === filtroStatus;
+        return bateBusca && bateStatus;
+      });
+
+      if (!filtrados.length) {
+        els.lista.innerHTML = '<div class="empty">Nenhum cliente encontrado.</div>';
+        return;
+      }
+
+      els.lista.innerHTML = filtrados.map((c) => `
+        <div class="item">
+          <div class="item-top">
+            <div>
+              <div class="name">${c.nome || "-"}</div>
+              <div class="muted small">${c.telefone || "-"} • ${c.cpf || "-"}</div>
+            </div>
+            <span class="badge status-${c.status || "em_andamento"}">${statusLabel(c.status)}</span>
+          </div>
+
+          <div class="info-grid">
+            <div class="info"><small>Endereço</small>${c.endereco || "-"}</div>
+            <div class="info"><small>Bicicleta</small>${c.bicicleta || "-"}</div>
+            <div class="info"><small>Serviço</small>${c.servico || "-"}</div>
+            <div class="info"><small>Entrada</small>${c.dataEntrada || "-"}</div>
+            <div class="info"><small>Saída</small>${c.dataSaida || "-"}</div>
+            <div class="info"><small>Observações</small>${c.observacoes || "-"}</div>
+          </div>
+
+          <div class="item-actions">
+            <button class="btn-primary" data-wa="${c.id}">WhatsApp</button>
+            <button class="btn-secondary" data-edit="${c.id}">Editar</button>
+            <button class="btn-secondary" data-del="${c.id}">Excluir</button>
+          </div>
+        </div>
+      `).join("");
+
+      filtrados.forEach((c) => {
+        const wa = document.querySelector(`[data-wa="${c.id}"]`);
+        const ed = document.querySelector(`[data-edit="${c.id}"]`);
+        const del = document.querySelector(`[data-del="${c.id}"]`);
+        if (wa) wa.onclick = () => openWhatsApp(c.telefone);
+        if (ed) ed.onclick = () => editItem(c);
+        if (del) del.onclick = () => removeItem(c.id);
+      });
+    }
+
+    els.telefone.addEventListener("input", (e) => {
+      e.target.value = formatPhone(e.target.value);
+    });
+
+    els.cpf.addEventListener("input", (e) => {
+      e.target.value = formatCPF(e.target.value);
+    });
+
+    els.busca.addEventListener("input", renderList);
+    els.filtroStatus.addEventListener("change", renderList);
+    els.clearBtn.addEventListener("click", resetForm);
+
+    els.form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideError();
+
+      const payload = getPayload();
+      if (!payload.nome || !payload.telefone || !payload.cpf || !payload.bicicleta || !payload.servico) {
+        showError("Preencha nome, telefone, CPF, descrição da bicicleta e serviço.");
+        return;
+      }
+
+      try {
+        if (editingId) {
+          await updateDoc(doc(db, "clientes_marlon_bikes", editingId), payload);
+        } else {
+          await addDoc(clientesRef, {
+            ...payload,
+            createdAt: serverTimestamp(),
+          });
+        }
+        resetForm();
+      } catch (err) {
+        showError("Erro ao salvar. Confira se o Firestore está em modo de teste.");
+      }
+    });
+
+    els.dataEntrada.value = new Date().toISOString().slice(0, 10);
+
+    const q = query(clientesRef, orderBy("createdAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+      clientes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      renderList();
+    }, () => {
+      showError("Não foi possível carregar os clientes. Verifique se o Firestore está liberado para o app.");
+    });
+  </script>
+</body>
+</html>
