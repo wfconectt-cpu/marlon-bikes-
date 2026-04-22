@@ -483,4 +483,242 @@
               <h2>Cliente</h2>
               <div class="grid box">
                 <div><div class="label">Nome</div><div class="value">${escapeHtml(c.nome)}</div></div>
-                <div><div class="label">Telefone</div><div class="value">${
+                <div><div class="label">Telefone</div><div class="value">${escapeHtml(c.telefone)}</div></div>
+                <div><div class="label">CPF</div><div class="value">${escapeHtml(c.cpf)}</div></div>
+                <div><div class="label">Endereço</div><div class="value">${escapeHtml(c.endereco || "-")}</div></div>
+              </div>
+
+              <h2>Bicicleta</h2>
+              <div class="box">
+                <div class="label">Descrição</div>
+                <div class="value">${escapeHtml(c.bicicleta)}</div>
+              </div>
+
+              <h2>Serviço</h2>
+              <div class="box">
+                <div class="label">Serviço prestado</div>
+                <div class="value">${escapeHtml(c.servico)}</div>
+              </div>
+
+              <h2>Datas e status</h2>
+              <div class="grid box">
+                <div><div class="label">Entrada</div><div class="value">${escapeHtml(c.dataEntrada || "-")}</div></div>
+                <div><div class="label">Saída</div><div class="value">${escapeHtml(c.dataSaida || "-")}</div></div>
+                <div><div class="label">Status</div><div class="value">${escapeHtml(statusLabel(c.status))}</div></div>
+                <div><div class="label">Pagamento</div><div class="value">${escapeHtml(c.statusPagamento || "-")}</div></div>
+              </div>
+
+              <h2>Valores</h2>
+              <div class="grid box">
+                <div><div class="label">Peças</div><div class="value">${currencyBRL(c.valorPecas)}</div></div>
+                <div><div class="label">Mão de obra</div><div class="value">${currencyBRL(c.valorMaoObra)}</div></div>
+                <div><div class="label">Total</div><div class="value">${currencyBRL(c.valorTotal)}</div></div>
+              </div>
+
+              <h2>Observações</h2>
+              <div class="box"><div class="value">${escapeHtml(c.observacoes || "-")}</div></div>
+            </div>
+            <script>window.onload = () => window.print();</script>
+          </body>
+        </html>`;
+      const w = window.open("", "_blank");
+      if (!w) return;
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    }
+
+    function updateStats(list) {
+      const total = list.length;
+      const andamento = list.filter(x => x.status === "em_andamento").length;
+      const concluido = list.filter(x => x.status === "concluido").length;
+      const valor = list.reduce((acc, x) => acc + Number(x.valorTotal || 0), 0);
+      els.statTotal.textContent = String(total);
+      els.statAndamento.textContent = String(andamento);
+      els.statConcluido.textContent = String(concluido);
+      els.statValor.textContent = currencyBRL(valor);
+    }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify(clientes, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "marlon-bikes-backup.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function exportCSV() {
+      const headers = ["nome","telefone","cpf","endereco","bicicleta","servico","dataEntrada","dataSaida","valorPecas","valorMaoObra","valorTotal","status","statusPagamento","observacoes"];
+      const rows = [
+        headers.join(";"),
+        ...clientes.map(c => headers.map(h => `"${String(c[h] ?? "").replace(/"/g,'""')}"`).join(";"))
+      ];
+      const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "marlon-bikes-clientes.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function renderList() {
+      const termo = els.busca.value.toLowerCase().trim();
+      const filtroStatus = els.filtroStatus.value;
+
+      const filtrados = clientes.filter((c) => {
+        const alvo = [c.nome, c.cpf, c.telefone, c.endereco, c.bicicleta, c.servico]
+          .join(" ")
+          .toLowerCase();
+        const bateBusca = !termo || alvo.includes(termo);
+        const bateStatus = filtroStatus === "todos" ? true : c.status === filtroStatus;
+        return bateBusca && bateStatus;
+      });
+
+      updateStats(clientes);
+
+      if (!filtrados.length) {
+        els.lista.innerHTML = '<div class="empty">Nenhum cliente encontrado.</div>';
+        return;
+      }
+
+      els.lista.innerHTML = filtrados.map((c) => `
+        <div class="item">
+          <div class="item-top">
+            <div>
+              <div class="name">${escapeHtml(c.nome || "-")}</div>
+              <div class="muted small">${escapeHtml(c.telefone || "-")} • ${escapeHtml(c.cpf || "-")}</div>
+            </div>
+            <span class="badge status-${escapeHtml(c.status || "em_andamento")}">${escapeHtml(statusLabel(c.status))}</span>
+          </div>
+
+          <div class="info-grid">
+            <div class="info"><small>Endereço</small>${escapeHtml(c.endereco || "-")}</div>
+            <div class="info"><small>Bicicleta</small>${escapeHtml(c.bicicleta || "-")}</div>
+            <div class="info"><small>Serviço</small>${escapeHtml(c.servico || "-")}</div>
+            <div class="info"><small>Entrada / Saída</small>${escapeHtml((c.dataEntrada || "-") + (c.dataSaida ? " • " + c.dataSaida : ""))}</div>
+            <div class="info"><small>Orçamento</small>${currencyBRL(c.valorTotal)} (${currencyBRL(c.valorPecas)} peças + ${currencyBRL(c.valorMaoObra)} mão de obra)</div>
+            <div class="info"><small>Pagamento</small>${escapeHtml(c.statusPagamento || "-")}</div>
+          </div>
+
+          <div class="item-actions">
+            <button class="btn-primary" data-wa="${c.id}">WhatsApp</button>
+            <button class="btn-secondary" data-print="${c.id}">Imprimir ficha</button>
+            <button class="btn-secondary" data-edit="${c.id}">Editar</button>
+            <button class="btn-danger" data-del="${c.id}">Excluir</button>
+          </div>
+        </div>
+      `).join("");
+
+      filtrados.forEach((c) => {
+        const wa = document.querySelector(`[data-wa="${c.id}"]`);
+        const pr = document.querySelector(`[data-print="${c.id}"]`);
+        const ed = document.querySelector(`[data-edit="${c.id}"]`);
+        const del = document.querySelector(`[data-del="${c.id}"]`);
+        if (wa) wa.onclick = () => openWhatsApp(c.telefone);
+        if (pr) pr.onclick = () => printFicha(c);
+        if (ed) ed.onclick = () => editItem(c);
+        if (del) del.onclick = () => removeItem(c.id);
+      });
+    }
+
+    function listenClientes() {
+      if (unsubscribeClientes) unsubscribeClientes();
+      const q = query(clientesRef, orderBy("createdAt", "desc"));
+      unsubscribeClientes = onSnapshot(q, (snapshot) => {
+        clientes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        renderList();
+      }, (err) => {
+        showError("Não foi possível carregar os clientes. Verifique as regras do Firestore.");
+      });
+    }
+
+    els.telefone.addEventListener("input", (e) => e.target.value = formatPhone(e.target.value));
+    els.cpf.addEventListener("input", (e) => e.target.value = formatCPF(e.target.value));
+    els.valorPecas.addEventListener("input", computeTotal);
+    els.valorMaoObra.addEventListener("input", computeTotal);
+    els.busca.addEventListener("input", renderList);
+    els.filtroStatus.addEventListener("change", renderList);
+    els.clearBtn.addEventListener("click", resetForm);
+    els.exportJsonBtn.addEventListener("click", exportJSON);
+    els.exportCsvBtn.addEventListener("click", exportCSV);
+
+    els.loginBtn.addEventListener("click", async () => {
+      hideAuthError();
+      try {
+        await signInWithEmailAndPassword(auth, els.authEmail.value.trim(), els.authPassword.value);
+      } catch (e) {
+        showAuthError("Não foi possível entrar. Confira email e senha.");
+      }
+    });
+
+    els.registerBtn.addEventListener("click", async () => {
+      hideAuthError();
+      try {
+        await createUserWithEmailAndPassword(auth, els.authEmail.value.trim(), els.authPassword.value);
+        showAuthError("Conta criada. Se já entrou automaticamente, pode fechar esta mensagem.");
+        els.authMsg.classList.remove("error");
+        els.authMsg.classList.add("ok");
+      } catch (e) {
+        showAuthError("Não foi possível criar a conta. Verifique o email ou use uma senha mais forte.");
+      }
+    });
+
+    els.resetPasswordBtn.addEventListener("click", async () => {
+      hideAuthError();
+      try {
+        await sendPasswordResetEmail(auth, els.authEmail.value.trim());
+        showAuthError("Email de redefinição enviado.");
+        els.authMsg.classList.remove("error");
+        els.authMsg.classList.add("ok");
+      } catch (e) {
+        showAuthError("Não foi possível enviar o email de redefinição.");
+      }
+    });
+
+    els.logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    els.form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideError();
+
+      const payload = getPayload();
+      if (!payload.nome || !payload.telefone || !payload.cpf || !payload.bicicleta || !payload.servico) {
+        showError("Preencha nome, telefone, CPF, descrição da bicicleta e serviço.");
+        return;
+      }
+
+      try {
+        if (editingId) {
+          await updateDoc(doc(db, "clientes_marlon_bikes", editingId), payload);
+          showOk("Cadastro atualizado com sucesso.");
+        } else {
+          await addDoc(clientesRef, { ...payload, createdAt: serverTimestamp() });
+          showOk("Cadastro salvo com sucesso.");
+        }
+        resetForm();
+      } catch (err) {
+        showError("Erro ao salvar. Confirme se seu usuário está logado e se as regras do Firestore estão corretas.");
+      }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        els.authScreen.classList.add("hidden");
+        els.appScreen.classList.remove("hidden");
+        els.userEmail.textContent = user.email || "-";
+        listenClientes();
+      } else {
+        els.appScreen.classList.add("hidden");
+        els.authScreen.classList.remove("hidden");
+        els.userEmail.textContent = "-";
+        if (unsubscribeClientes) unsubscribeClientes();
+      }
+    });
+
+    els.dataEntrada.value = new Date().toISOString().slice(0, 10);
+  </script>
+</body>
+</html>
